@@ -23,15 +23,19 @@ if True: # iOS
 	DEVROOT = "/Developer/Platforms/iPhoneOS.platform/Developer"
 	#SDKROOT = DEVROOT + "/SDKs/iPhoneOS5.0.sdk"
 	SDKROOT = selectNewestDir("/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS*.sdk")
+	SDKROOT2 = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk"
 	assert os.path.exists(DEVROOT)
 	assert os.path.exists(SDKROOT)
+	assert os.path.exists(SDKROOT2)
 
 	# Clang within the Xcode toolchain is buggy?
 	# See https://github.com/albertz/playground/blob/master/test-int-cmp.c .
 	#CC = DEVROOT + "/usr/bin/arm-apple-darwin10-llvm-gcc-4.2"
-	#CC = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
-	CC = "/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cc"
+	#CC = DEVROOT + "/usr/bin/clang"
+	CC = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
+	#CC = "/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cc"
 	LD = DEVROOT + "/usr/bin/ld"
+	#LD = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
 	LIBTOOL = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/libtool"
 	assert os.path.exists(CC)
 	assert os.path.exists(LD)
@@ -44,26 +48,28 @@ if True: # iOS
 		#"-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/3.1/include",
 		"-pipe",
 		#"-no-cpp-precomp",
-		"-arch", "armv6",
 		"-arch", "armv7",
-		"-miphoneos-version-min=4.3",
-		"-mthumb",
-		"-g",
+		"-arch", "arm64",
+		"-miphoneos-version-min=6.0",
+		#"-mthumb",
+		#"-g",
 		#"-Winvalid-offsetof",
 		#"-fmessage-length=0",
 		#"-Wno-trigraphs",
 		#"-fpascal-strings",
-		"-O0",
+		"-O2",
+		"-DNDEBUG",	# To remove asserts.
 		"-IiOS-static-libs/iPhoneOS-V7-4.3/include/",
 		]
 	LDFLAGS += [
-		"-arch", "armv6",
-		"-ios_version_min", "4.3",
+		"-arch", "armv7",
+		"-arch", "arm64",
+		"-ios_version_min=6.0",
 		#"-isysroot", SDKROOT,
 		"-L%s/usr/lib" % SDKROOT,
 		"-L%s/usr/lib/system" % SDKROOT,
 		"-lc",
-		#SDKROOT + "/usr/lib/crt1.o",
+		SDKROOT2 + "/usr/lib/crt1.3.1.o",
 		"-lgcc_s.1",
 		]
 	
@@ -98,7 +104,8 @@ def glob(pattern):
 baseFiles = \
 	set(glob(PythonDir + "/Python/*.c")) - \
 	set(glob(PythonDir + "/Python/dynload_*.c")) - \
-	set(glob(PythonDir + "/Python/mactoolboxglue.c"))
+	set(glob(PythonDir + "/Python/mactoolboxglue.c")) - \
+	set(glob(PythonDir + "/Python/sigcheck.c"))
 baseFiles |= \
 	set(glob(PythonDir + "/Python/dynload_stub.c")) | \
 	set(glob("pyimportconfig.c")) | \
@@ -128,33 +135,36 @@ modFiles = \
 			"posixmodule.c",
 			"arraymodule.c",
 			"gcmodule.c",
+			"faulthandler.c",
+			"_tracemalloc.c",
+			"hashtable.c",
 			"_csv.c",
 			"_collectionsmodule.c",
 			"itertoolsmodule.c",
-			"operator.c",
+			"_operator.c",
 			"_math.c",
 			"mathmodule.c",
 			"errnomodule.c",
 			"_weakref.c",
 			"_sre.c",
 			"_codecsmodule.c",
-			"cStringIO.c",
+			#"cStringIO.c",
 			"timemodule.c",
-			"datetimemodule.c",
-			"shamodule.c",
+			"_datetimemodule.c",
+			"sha1module.c",
 			"sha256module.c",
 			"sha512module.c",
-			"md5.c",
+			#"md5.c",
 			"md5module.c",
 			"_json.c",
 			"_struct.c",
 			"_functoolsmodule.c",
-			"threadmodule.c",
+			"_threadmodule.c",
 			"binascii.c",
 			"_randommodule.c",
 			"socketmodule.c",
-			"_ssl.c",
-			"zlibmodule.c",
+			#"_ssl.c",
+			#"zlibmodule.c",
 			"selectmodule.c",
 			"signalmodule.c",
 			"fcntlmodule.c",
@@ -165,7 +175,7 @@ modFiles = \
 if not buildExec:
 	modFiles -= set([PythonDir + "/Modules/python.c"])
 
-objFiels = \
+objFiles = \
 	set(glob(PythonDir + "/Objects/*.c"))
 
 parserFiles = \
@@ -189,7 +199,7 @@ pycryptoFiles = map(lambda f: "pycrypto/src/" + f,
 compileOpts = CFLAGS + [
 	"-Ipylib",
 	"-I" + PythonDir + "/Include",
-	"-DWITH_PYCRYPTO",
+	#"-DWITH_PYCRYPTO",
 ]
 
 compilePycryptoOpts = compileOpts + [
@@ -204,25 +214,28 @@ def execCmd(cmd):
 	return os.system(cmdFlat)
 	
 def compilePyFile(f, compileOpts):
+	if not os.path.exists(f):
+		print('%s does not exist' % f)
+		sys.exit(1)
 	ofile = os.path.splitext(os.path.basename(f))[0] + ".o"
 	try:
 		if os.stat(f).st_mtime < os.stat("build/" + ofile).st_mtime:
-			return ofile
+			return [ofile]
 	except: pass
 	cmd = [CC] + compileOpts + ["-c", f, "-o", "build/" + ofile]
 	if execCmd(cmd) != 0:
 		sys.exit(1)
-	return ofile
+	return [ofile]
 
 def compilePycryptoFile(fn):
 	return compilePyFile(fn, compilePycryptoOpts)
 	
 def compile():
 	ofiles = []
-	for f in list(baseFiles) + list(modFiles) + list(objFiels) + list(parserFiles):
-		ofiles += [compilePyFile(f, compileOpts)]
-	for f in list(pycryptoFiles):
-		ofiles += [compilePycryptoFile(f)]
+	for f in list(baseFiles) + list(modFiles) + list(objFiles) + list(parserFiles):
+		ofiles += compilePyFile(f, compileOpts)
+	#for f in list(pycryptoFiles):
+	#	ofiles += compilePycryptoFile(f)
 	
 	if buildExec:
 		execCmd([CC] + LDFLAGS + map(lambda f: "build/" + f, ofiles) + ["-o", "python"])
@@ -236,11 +249,11 @@ def compile():
 			 "-o", "libpython.a"] +
 			map(lambda f: "build/" + f, ofiles) +
 			map(lambda f: "iOS-static-libs/iPhoneOS-V7-4.3/lib/" + f, [
-				"libssl.a",
-				"libcrypto.a",
-				"libgcrypt.a",
-				"libsasl2.a",
-				"libz.a",
+				#"libssl.a",
+				#"libcrypto.a",
+				#"libgcrypt.a",
+				#"libsasl2.a",
+				#"libz.a",
 				]))
 		
 if __name__ == '__main__':

@@ -2,7 +2,7 @@
 *.pyc
 .*.swp
 /build
+pylib/lib/*
 
 # this is right now the build executable
-/python
 /libpython.a

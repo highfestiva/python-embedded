@@ -368,6 +368,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+#define HAVE_UINT32_T 1
+#define HAVE_INT32_T 1
+
 /* Define to 1 if you have the <io.h> header file. */
 /* #undef HAVE_IO_H */
 
@@ -942,19 +945,24 @@
 #define PY_FORMAT_SIZE_T "z"
 
 /* Define as the integral type used for Unicode representation. */
-#define PY_UNICODE_TYPE unsigned short
+/*#define PY_UNICODE_TYPE unsigned short*/
 
 /* Define if you want to build an interpreter with many run-time checks. */
 /* #undef Py_DEBUG */
+
+#ifndef Py_DEBUG
+/* For iOS, assert is a function. */
+#define assert(x)
+#endif
 
 /* Defined if Python is built as a shared library. */
 /* #undef Py_ENABLE_SHARED */
 
 /* Define as the size of the unicode type. */
-#define Py_UNICODE_SIZE 2
+/*#define Py_UNICODE_SIZE 2*/
 
 /* Define if you want to have a Unicode type. */
-#define Py_USING_UNICODE 1
+/*#define Py_USING_UNICODE 1*/
 
 /* assume C89 semantics that RETSIGTYPE is always void */
 #define RETSIGTYPE void

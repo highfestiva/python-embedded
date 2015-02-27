@@ -4,17 +4,17 @@
 #include <sys/types.h>
 #include <string.h>
 
-extern char *Py_GetProgramName(void);
+extern PyAPI_FUNC(wchar_t *) Py_GetProgramName(void);
 
 static int pathCalculated = 0; 
-static char progPath[MAXPATHLEN+1];
-static char modulePathes[4*MAXPATHLEN+1];
-static char execPrefixPath[2*MAXPATHLEN+1];
+static wchar_t progPath[MAXPATHLEN+1];
+static wchar_t modulePathes[4*MAXPATHLEN+1];
+static wchar_t execPrefixPath[2*MAXPATHLEN+1];
 
 static void calcPathes() {
 	if(pathCalculated) return;
 
-	char* p = stpcpy(progPath, Py_GetProgramName());
+	wchar_t* p = wcpcpy(progPath, Py_GetProgramName());
 	while(--p > progPath) {
 		if(*p == '/') {
 			*p = 0;
@@ -22,40 +22,40 @@ static void calcPathes() {
 		}
 	}
 	
-	strcpy(modulePathes, progPath);
-	strcat(modulePathes, "/pylib/lib:");
-	strcat(modulePathes, progPath);
-	strcat(modulePathes, "/pylib/otherlibs");
-	strcpy(execPrefixPath, progPath);
-	strcat(execPrefixPath, "/pylib/exec");
+	wcscpy(modulePathes, progPath);
+	wcscat(modulePathes, L"/pylib/lib:");
+	wcscat(modulePathes, progPath);
+	wcscat(modulePathes, L"/pylib/sitepkgs");
+	wcscpy(execPrefixPath, progPath);
+	wcscat(execPrefixPath, L"/pylib/exec");
 	
 	pathCalculated = 1;
 }
 
 /* External interface */
 
-char *
+wchar_t *
 Py_GetPath(void)
 {
 	calcPathes();
 	return modulePathes;
 }
 
-char *
+wchar_t *
 Py_GetPrefix(void)
 {
 	calcPathes();
-	return "pygetpath.c-PYPREFIX-NOT-SET";
+	return L"pygetpath.c-PYPREFIX-NOT-SET";
 }
 
-char *
+wchar_t *
 Py_GetExecPrefix(void)
 {
 	calcPathes();
 	return execPrefixPath;
 }
 
-char *
+wchar_t *
 Py_GetProgramFullPath(void)
 {
 	calcPathes();
