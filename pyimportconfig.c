@@ -8,6 +8,7 @@ extern PyMODINIT_FUNC PyInit__io(void);
 extern PyMODINIT_FUNC PyInit__csv(void);
 extern PyMODINIT_FUNC PyInit_itertools(void);
 extern PyMODINIT_FUNC PyInit__collections(void);
+extern PyMODINIT_FUNC PyInit__heapq(void);
 extern PyMODINIT_FUNC PyInit__operator(void);
 extern PyMODINIT_FUNC PyInit_math(void);
 extern PyMODINIT_FUNC PyInit_errno(void);
@@ -16,7 +17,7 @@ extern PyMODINIT_FUNC PyInit_posix(void);
 extern PyMODINIT_FUNC PyInit__weakref(void);
 extern PyMODINIT_FUNC PyInit__sre(void);
 extern PyMODINIT_FUNC PyInit__codecs(void);
-//extern PyMODINIT_FUNC PyInit_cStringIO(void);
+extern PyMODINIT_FUNC PyInit__string(void);
 extern PyMODINIT_FUNC PyInit_time(void);
 extern PyMODINIT_FUNC PyInit__datetime(void);
 extern PyMODINIT_FUNC PyInit__sha1(void);
@@ -38,6 +39,12 @@ extern PyMODINIT_FUNC PyInit__socket(void);
 extern PyMODINIT_FUNC PyInit_select(void);
 extern PyMODINIT_FUNC PyInit_signal(void);
 extern PyMODINIT_FUNC PyInit_fcntl(void);
+extern PyMODINIT_FUNC PyInit__locale(void);
+extern PyMODINIT_FUNC PyInit__pickle(void);
+extern PyMODINIT_FUNC PyInit__stat(void);
+extern PyMODINIT_FUNC PyInit_cmath(void);
+extern PyMODINIT_FUNC PyInit_fpectl(void);
+extern PyMODINIT_FUNC PyInit_unicodedata(void);
 
 #ifdef WITH_PYCRYPTO
 extern PyMODINIT_FUNC PyInit__PyCrypto(void);
@@ -49,18 +56,19 @@ struct _inittab _PyImport_Inittab[] = {
     {"_csv", PyInit__csv},
     {"itertools", PyInit_itertools},
     {"_collections", PyInit__collections},
-    {"operator", PyInit__operator},
+    {"_heapq", PyInit__heapq},
+    {"_operator", PyInit__operator},
     {"math", PyInit_math},
     {"errno", PyInit_errno},
     {"gc", PyInit_gc},
-	{"posix", PyInit_posix},
+    {"posix", PyInit_posix},
     {"_weakref", PyInit__weakref},
     {"_sre", PyInit__sre},
     {"_codecs", PyInit__codecs},
-//    {"cStringIO", PyInit_cStringIO},
+    {"_string", PyInit__string},
     {"time", PyInit_time},
-    {"datetime", PyInit__datetime},
-    {"_sha", PyInit__sha1},
+    {"_datetime", PyInit__datetime},
+    {"_sha1", PyInit__sha1},
     {"_sha256", PyInit__sha256},
     {"_sha512", PyInit__sha512},
     {"_md5", PyInit__md5},
@@ -68,7 +76,7 @@ struct _inittab _PyImport_Inittab[] = {
     {"_struct", PyInit__struct},
     {"_functools", PyInit__functools},
 #ifdef WITH_THREAD
-    {"thread", PyInit__thread},
+    {"_thread", PyInit__thread},
 #endif
 	{"binascii", PyInit_binascii},
 	{"_random", PyInit__random},
@@ -78,10 +86,16 @@ struct _inittab _PyImport_Inittab[] = {
 	{"select", PyInit_select},
 	{"signal", PyInit_signal},
 	{"fcntl", PyInit_fcntl},
-	
+	{"_locale", PyInit__locale},
+	{"_pickle", PyInit__pickle},
+	{"_stat", PyInit__stat},
+	{"cmath", PyInit_cmath},
+	{"fpectl", PyInit_fpectl},
+	{"unicodedata", PyInit_unicodedata},
+
+
 /*
     {"_ast", PyInit__ast},
-    {"cmath", PyInit_cmath},
     {"future_builtins", PyInit_future_builtins},
     {"strop", PyInit_strop},
     {"cPickle", PyInit_cPickle},
@@ -89,7 +103,6 @@ struct _inittab _PyImport_Inittab[] = {
 	
     {"_hotshot", PyInit__hotshot},
     {"_bisect", PyInit__bisect},
-    {"_heapq", PyInit__heapq},
     {"_lsprof", PyInit__lsprof},
     {"_symtable", PyInit__symtable},
     {"mmap", PyInit_mmap},

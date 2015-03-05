@@ -1,8 +1,8 @@
 .DS_Store
 *.pyc
 .*.swp
-/build
-pylib/lib/*
+/build*
+/pylib/lib/*
 
 # this is right now the build executable
-/libpython.a
+/libpython*.a

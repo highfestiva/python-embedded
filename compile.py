@@ -16,69 +16,50 @@ def selectNewestDir(dirpattern):
 	from glob import glob
 	dirs = glob(dirpattern)
 	assert dirs
-	# TODO...
 	return dirs[-1]
 
-if True: # iOS
-	DEVROOT = "/Developer/Platforms/iPhoneOS.platform/Developer"
-	#SDKROOT = DEVROOT + "/SDKs/iPhoneOS5.0.sdk"
-	SDKROOT = selectNewestDir("/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS*.sdk")
-	SDKROOT2 = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk"
-	assert os.path.exists(DEVROOT)
-	assert os.path.exists(SDKROOT)
-	assert os.path.exists(SDKROOT2)
+platform = 'iPhoneSimulator' if 'simulator' in sys.argv else 'iPhoneOS'
+platext  = '_sim' if 'simulator' in sys.argv else ''
+archs    = ['-arch', 'i386'] if 'simulator' in sys.argv else ['-arch', 'armv7', '-arch', 'arm64']
 
-	# Clang within the Xcode toolchain is buggy?
-	# See https://github.com/albertz/playground/blob/master/test-int-cmp.c .
-	#CC = DEVROOT + "/usr/bin/arm-apple-darwin10-llvm-gcc-4.2"
-	#CC = DEVROOT + "/usr/bin/clang"
-	CC = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
-	#CC = "/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cc"
-	LD = DEVROOT + "/usr/bin/ld"
-	#LD = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
-	LIBTOOL = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/libtool"
-	assert os.path.exists(CC)
-	assert os.path.exists(LD)
-	assert os.path.exists(LIBTOOL)
-	
-	CFLAGS += [
-		"-isysroot", SDKROOT,
-		#"-I%s/usr/lib/gcc/arm-apple-darwin10/4.2.1/include/" % SDKROOT,
-		"-I%s/usr/include/" % SDKROOT,
-		#"-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/3.1/include",
-		"-pipe",
-		#"-no-cpp-precomp",
-		"-arch", "armv7",
-		"-arch", "arm64",
-		"-miphoneos-version-min=6.0",
-		#"-mthumb",
-		#"-g",
-		#"-Winvalid-offsetof",
-		#"-fmessage-length=0",
-		#"-Wno-trigraphs",
-		#"-fpascal-strings",
-		"-O2",
-		"-DNDEBUG",	# To remove asserts.
-		"-IiOS-static-libs/iPhoneOS-V7-4.3/include/",
-		]
-	LDFLAGS += [
-		"-arch", "armv7",
-		"-arch", "arm64",
-		"-ios_version_min=6.0",
-		#"-isysroot", SDKROOT,
-		"-L%s/usr/lib" % SDKROOT,
-		"-L%s/usr/lib/system" % SDKROOT,
-		"-lc",
-		SDKROOT2 + "/usr/lib/crt1.3.1.o",
-		"-lgcc_s.1",
-		]
-	
+DEVROOT = "/Developer/Platforms/%s.platform/Developer" % platform
+SDKROOT = selectNewestDir("/Applications/Xcode.app/Contents/Developer/Platforms/%s.platform/Developer/SDKs/%s*.sdk" % (platform,platform))
+SDKROOT2 = "/Applications/Xcode.app/Contents/Developer/Platforms/%s.platform/Developer/SDKs/%s.sdk" % (platform,platform)
+assert os.path.exists(DEVROOT)
+assert os.path.exists(SDKROOT)
+assert os.path.exists(SDKROOT2)
+
+CC = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
+LD = DEVROOT + "/usr/bin/ld"
+LIBTOOL = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/libtool"
+assert os.path.exists(CC)
+assert os.path.exists(LD)
+assert os.path.exists(LIBTOOL)
+
+CFLAGS += [
+	"-isysroot", SDKROOT,
+	"-I%s/usr/include/" % SDKROOT,
+	"-pipe"] + \
+	archs + \
+	["-miphoneos-version-min=6.0",
+	"-O2",
+	"-DNDEBUG",	# To remove asserts.
+	]
+LDFLAGS += archs + [
+	"-ios_version_min=6.0",
+	"-L%s/usr/lib" % SDKROOT,
+	"-L%s/usr/lib/system" % SDKROOT,
+	"-lc",
+	SDKROOT2 + "/usr/lib/crt1.3.1.o",
+	"-lgcc_s.1",
+	]
+
 PythonDir = "CPython"
 assert os.path.exists(PythonDir)
 
 from glob import glob as pyglob
 from pprint import pprint
-try: os.mkdir("build")
+try: os.mkdir("build%s"%platext)
 except: pass
 
 def glob(pattern):
@@ -140,21 +121,26 @@ modFiles = \
 			"hashtable.c",
 			"_csv.c",
 			"_collectionsmodule.c",
+			"_heapqmodule.c",
 			"itertoolsmodule.c",
+			"_localemodule.c",
 			"_operator.c",
+			"_pickle.c",
+			"_stat.c",
+			"cmathmodule.c",
+			"fpectlmodule.c",
 			"_math.c",
 			"mathmodule.c",
 			"errnomodule.c",
 			"_weakref.c",
 			"_sre.c",
 			"_codecsmodule.c",
-			#"cStringIO.c",
+			"unicodedata.c",
 			"timemodule.c",
 			"_datetimemodule.c",
 			"sha1module.c",
 			"sha256module.c",
 			"sha512module.c",
-			#"md5.c",
 			"md5module.c",
 			"_json.c",
 			"_struct.c",
@@ -219,10 +205,10 @@ def compilePyFile(f, compileOpts):
 		sys.exit(1)
 	ofile = os.path.splitext(os.path.basename(f))[0] + ".o"
 	try:
-		if os.stat(f).st_mtime < os.stat("build/" + ofile).st_mtime:
+		if os.stat(f).st_mtime < os.stat(("build%s/"%platext) + ofile).st_mtime:
 			return [ofile]
 	except: pass
-	cmd = [CC] + compileOpts + ["-c", f, "-o", "build/" + ofile]
+	cmd = [CC] + compileOpts + ["-c", f, "-o", ("build%s/"%platext) + ofile]
 	if execCmd(cmd) != 0:
 		sys.exit(1)
 	return [ofile]
@@ -238,24 +224,13 @@ def compile():
 	#	ofiles += compilePycryptoFile(f)
 	
 	if buildExec:
-		execCmd([CC] + LDFLAGS + map(lambda f: "build/" + f, ofiles) + ["-o", "python"])
+		execCmd([CC] + LDFLAGS + map(lambda f: ("build%s/"%platext) + f, ofiles) + ["-o", "python%s"%platext])
 	else:
-		#execCmd([LD] + LDFLAGS + map(lambda f: "build/" + f, ofiles) +
-		#	["-o", "libpython.a"])
-		#execCmd(["ar", "rcs", "libpython.a"] + map(lambda f: "build/" + f, ofiles))
 		execCmd(
-			[LIBTOOL, "-static", "-syslibroot", SDKROOT,
-			 #"-arch_only", "armv7",
-			 "-o", "libpython.a"] +
-			map(lambda f: "build/" + f, ofiles) +
-			map(lambda f: "iOS-static-libs/iPhoneOS-V7-4.3/lib/" + f, [
-				#"libssl.a",
-				#"libcrypto.a",
-				#"libgcrypt.a",
-				#"libsasl2.a",
-				#"libz.a",
-				]))
-		
+			[LIBTOOL, "-static", "-syslibroot", SDKROOT, "-o", "libpython%s.a"%platext] +
+			map(lambda f: ("build%s/"%platext) + f, ofiles)
+			)
+
 if __name__ == '__main__':
 	compile()
 
