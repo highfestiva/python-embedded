@@ -20,7 +20,7 @@ def selectNewestDir(dirpattern):
 
 platform = 'iPhoneSimulator' if 'simulator' in sys.argv else 'iPhoneOS'
 platext  = '_sim' if 'simulator' in sys.argv else ''
-archs    = ['-arch', 'i386'] if 'simulator' in sys.argv else ['-arch', 'armv7', '-arch', 'arm64']
+archs    = ['-arch', 'i386', '-arch', 'x86_64'] if 'simulator' in sys.argv else ['-arch', 'armv7', '-arch', 'arm64']
 
 DEVROOT = "/Developer/Platforms/%s.platform/Developer" % platform
 SDKROOT = selectNewestDir("/Applications/Xcode.app/Contents/Developer/Platforms/%s.platform/Developer/SDKs/%s*.sdk" % (platform,platform))
