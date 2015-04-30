@@ -1,4 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python3.4
+
+'''Run with simulator and/or debug on commandline to build iOS artifact.'''
+
 import os, sys
 os.chdir(os.path.dirname(__file__) or os.getcwd())
 import better_exchook
@@ -21,6 +24,7 @@ def selectNewestDir(dirpattern):
 platform = 'iPhoneSimulator' if 'simulator' in sys.argv else 'iPhoneOS'
 platext  = '_sim' if 'simulator' in sys.argv else ''
 archs    = ['-arch', 'i386', '-arch', 'x86_64'] if 'simulator' in sys.argv else ['-arch', 'armv7', '-arch', 'arm64']
+debugs   = ['-g'] if 'debug' in sys.argv else []
 
 DEVROOT = "/Developer/Platforms/%s.platform/Developer" % platform
 SDKROOT = selectNewestDir("/Applications/Xcode.app/Contents/Developer/Platforms/%s.platform/Developer/SDKs/%s*.sdk" % (platform,platform))
@@ -40,12 +44,12 @@ CFLAGS += [
 	"-isysroot", SDKROOT,
 	"-I%s/usr/include/" % SDKROOT,
 	"-pipe"] + \
-	archs + \
+	archs + debugs + \
 	["-miphoneos-version-min=6.0",
 	"-O2",
 	"-DNDEBUG",	# To remove asserts.
 	]
-LDFLAGS += archs + [
+LDFLAGS += archs + debugs + [
 	"-ios_version_min=6.0",
 	"-L%s/usr/lib" % SDKROOT,
 	"-L%s/usr/lib/system" % SDKROOT,
@@ -108,8 +112,7 @@ modFiles = \
 # Add the init reference also to pyimportconfig.c.
 # For hacking builtin submodules, see pycryptoutils/cryptomodule.c.
 modFiles = \
-	set(map(lambda f: PythonDir + "/Modules/" + f,
-		[
+	set([PythonDir + "/Modules/" + f for f in [
 			"main.c",
 			"python.c",
 			"getbuildinfo.c",
@@ -154,7 +157,7 @@ modFiles = \
 			"selectmodule.c",
 			"signalmodule.c",
 			"fcntlmodule.c",
-			])) | \
+			]]) | \
 	set(glob(PythonDir + "/Modules/_io/*.c"))
 
 # remove main.c/python.c if we dont want an executable
@@ -174,12 +177,11 @@ pycryptoFiles = \
 	set(glob("pycrypto/src/cast*.c")) - \
 	set(glob("pycrypto/src/_fastmath.c")) # for now. it needs libgmp
 
-pycryptoFiles = map(lambda f: "pycrypto/src/" + f,
-	[
+pycryptoFiles = ["pycrypto/src/" + f for f in [
 		"_counter.c",
 		"AES.c",
 		"strxor.c",
-	]) + \
+	]] + \
 	["pycryptoutils/cryptomodule.c"]
 
 compileOpts = CFLAGS + [
@@ -196,12 +198,12 @@ compilePycryptoOpts = compileOpts + [
 
 def execCmd(cmd):
 	cmdFlat = " ".join(cmd)
-	print cmdFlat
+	print(cmdFlat)
 	return os.system(cmdFlat)
 	
 def compilePyFile(f, compileOpts):
 	if not os.path.exists(f):
-		print('%s does not exist' % f)
+		print(('%s does not exist' % f))
 		sys.exit(1)
 	ofile = os.path.splitext(os.path.basename(f))[0] + ".o"
 	try:
@@ -224,11 +226,11 @@ def compile():
 	#	ofiles += compilePycryptoFile(f)
 	
 	if buildExec:
-		execCmd([CC] + LDFLAGS + map(lambda f: ("build%s/"%platext) + f, ofiles) + ["-o", "python%s"%platext])
+		execCmd([CC] + LDFLAGS + [("build%s/"%platext) + f for f in ofiles] + ["-o", "python%s"%platext])
 	else:
 		execCmd(
 			[LIBTOOL, "-static", "-syslibroot", SDKROOT, "-o", "libpython%s.a"%platext] +
-			map(lambda f: ("build%s/"%platext) + f, ofiles)
+			[("build%s/"%platext) + f for f in ofiles]
 			)
 
 if __name__ == '__main__':
