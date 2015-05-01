@@ -45,6 +45,7 @@ extern PyMODINIT_FUNC PyInit__stat(void);
 extern PyMODINIT_FUNC PyInit_cmath(void);
 extern PyMODINIT_FUNC PyInit_fpectl(void);
 extern PyMODINIT_FUNC PyInit_unicodedata(void);
+extern PyMODINIT_FUNC PyInit__ast(void);
 
 #ifdef WITH_PYCRYPTO
 extern PyMODINIT_FUNC PyInit__PyCrypto(void);
@@ -53,6 +54,7 @@ extern PyMODINIT_FUNC PyInit__PyCrypto(void);
 struct _inittab _PyImport_Inittab[] = {
 	
     {"array", PyInit_array},
+    {"ast", PyInit__ast},
     {"_csv", PyInit__csv},
     {"itertools", PyInit_itertools},
     {"_collections", PyInit__collections},

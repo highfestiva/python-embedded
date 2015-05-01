@@ -24,7 +24,8 @@ def selectNewestDir(dirpattern):
 platform = 'iPhoneSimulator' if 'simulator' in sys.argv else 'iPhoneOS'
 platext  = '_sim' if 'simulator' in sys.argv else ''
 archs    = ['-arch', 'i386', '-arch', 'x86_64'] if 'simulator' in sys.argv else ['-arch', 'armv7', '-arch', 'arm64']
-debugs   = ['-g'] if 'debug' in sys.argv else []
+debug   = ['-g'] if 'debug' in sys.argv else []
+optimize = ['-O2'] if not 'nooptimize' in sys.argv else []
 
 DEVROOT = "/Developer/Platforms/%s.platform/Developer" % platform
 SDKROOT = selectNewestDir("/Applications/Xcode.app/Contents/Developer/Platforms/%s.platform/Developer/SDKs/%s*.sdk" % (platform,platform))
@@ -44,12 +45,11 @@ CFLAGS += [
 	"-isysroot", SDKROOT,
 	"-I%s/usr/include/" % SDKROOT,
 	"-pipe"] + \
-	archs + debugs + \
+	archs + debug + optimize + \
 	["-miphoneos-version-min=6.0",
-	"-O2",
 	"-DNDEBUG",	# To remove asserts.
 	]
-LDFLAGS += archs + debugs + [
+LDFLAGS += archs + debug + [
 	"-ios_version_min=6.0",
 	"-L%s/usr/lib" % SDKROOT,
 	"-L%s/usr/lib/system" % SDKROOT,
